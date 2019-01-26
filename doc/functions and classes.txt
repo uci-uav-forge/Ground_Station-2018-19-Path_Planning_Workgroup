@@ -1,0 +1,83 @@
+
+
+------------------------------------------------------------------------
+
+Global Constants
+
+SafetyMargin 
+- extra min distance from perimeter of obstacle
+- added on to radius of obstacle
+
+WaypointSeq: 
+- Sequence of waypoints
+- Only one such object
+
+ObstacleList:
+- list of all Obstacles
+
+MaxTurnRadius:
+- What is this value?
+- need an estimate (based on max speed)
+
+MaxAngleRate:
+- degrees/meter = 57.3/MaxTurnRadius
+
+-------------------------------------------------------------------------
+
+Classes
+
+Point:
+- X, Y
+
+Waypoint:
+- extends Point class 
+- name
+- inHeading (360 degree value)
+- hasInHeading (boolean val) : True when previous waypoint in seq is fixed
+- many such objects
+
+Circle
+- center (Point), radius
+
+Obstacle
+- extends Circle class
+- name
+
+Line
+- slope and yIntercept
+
+-------------------------------------------------------------------------
+
+Functions
+
+GetLinePts(point1, point2)
+- returns the line going through the two points
+
+GetIntersectingPoints(point1, point2, circle)
+- returns the points of intersection between point line and circle
+- 0 points returned means no intersection
+- 2 points returned means intersection with secant line
+- 1 point returned means tangent intersection (can treat like no intersection)
+
+Midpoint(point1, point2)
+- returns point which is midpoint between point1 and point2
+
+GetLineSlope(point, slope)
+- returns a line with slope, intersecting point
+
+GetAvoidPts(waypoint1, waypoint2, obstacle)
+- returns list of 2 new points (not waypoints)
+- new points are between the original waypoints
+- new points can be used to avoid obstacle on either side
+- new points outside of SafetyMargin (maybe barely)
+
+
+
+InsertNewWaypoint(point, index)
+- creates a waypoint from the points
+- inserts the new waypoint into the WaypointSeq after index
+- sets inHeading of new waypoint
+
+
+
+
