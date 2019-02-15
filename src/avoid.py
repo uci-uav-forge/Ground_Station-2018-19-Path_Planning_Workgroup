@@ -212,9 +212,29 @@ def TestInitProblem():
 
     WaypointSeq = [Waypoint('w1', 10, 500, 50), Waypoint('w2', 1000, 550, 100), Waypoint('w3', 1400, 500, 200)]
 #     ObstacleList = [Obstacle('o1', Point(500,500), 50), Obstacle('o2', Point(1500,500), 50)]
-#     ObstacleList = [Obstacle('o1', Point(500,500,75), 50), Obstacle('o2', Point(1200,500,75), 50)] # test height
-    ObstacleList = [Obstacle('o1', Point(500,500, 75), 50), Obstacle('o2', Point(500,390, 200), 50)] #test for check new pt safe
+    # test height
+    ObstacleList = [Obstacle('o1', Point(500,500,75), 50), Obstacle('o2', Point(1200,500,75), 50)] # test height
+#     ObstacleList = [Obstacle('o1', Point(500,500,50), 50), Obstacle('o2', Point(1200,500,75), 50)]
+#     ObstacleList = [Obstacle('o1', Point(500,500,30), 50), Obstacle('o2', Point(1200,500,100), 50)]
+#     ObstacleList = [Obstacle('o1', Point(500,500,25), 50), Obstacle('o2', Point(1200,500,300), 50)]    
+    #test new waypoint
+#     ObstacleList = [Obstacle('o1', Point(500,500, 75), 50), Obstacle('o2', Point(500,390, 200), 50)] #test for check new pt safe
 #     ObstacleList = [Obstacle('o1', Point(500,500), 50), Obstacle('o2', Point(1000,500), 50)] #test for waypoint near obstacle
+
+
+#     WaypointSeq = [Waypoint('w1', 10, 500, 50), Waypoint('w2', 600, 550, 100), Waypoint('w3', 1200, 500, 200)]
+#     # test height
+#     ObstacleList = [Obstacle('o1', Point(500,500,50), 50), Obstacle('o2', Point(1000,500,75), 50)]
+#     ObstacleList = [Obstacle('o1', Point(400,500,30), 50), Obstacle('o2', Point(1000,500,100), 50)]
+#     ObstacleList = [Obstacle('o1', Point(500,500,25), 50), Obstacle('o2', Point(800,500,300), 50)]
+#     # check new waypoint
+#     ObstacleList = [Obstacle('o1', Point(500,500, 75), 50), Obstacle('o2', Point(500,390, 200), 50)] 
+#     ObstacleList = [Obstacle('o1', Point(400,520, 75), 50), Obstacle('o2', Point(400,400, 20), 50)]
+#     ObstacleList = [Obstacle('o1', Point(400,520, 75), 50), Obstacle('o2', Point(400,400, 200), 50)]
+
+
+    
+
 
 def PrintWaypointSeq(wseq):
     print("Waypoint Sequence")
