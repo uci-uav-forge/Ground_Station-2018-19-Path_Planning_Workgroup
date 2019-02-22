@@ -59,14 +59,14 @@ def GetLineSlope(pt, m):
 def SolveQuadratic(a, b, c):
     d = b**2-4*a*c # discriminant
     if d < 0:
-       return ([])
+        return ([])
     elif d == 0:
-       s1 = (-b)/(2*a)
-       return ([s1])
+        s1 = (-b)/(2*a)
+        return ([s1])
     else:
-       s1 = (-b+sqrt(d))/(2*a)
-       s2 = (-b-sqrt(d))/(2*a)
-       return([s1, s2])
+        s1 = (-b+sqrt(d))/(2*a)
+        s2 = (-b-sqrt(d))/(2*a)
+        return([s1, s2])
 
 def GetIntersectLineCirc(aline, circ, height):
     # Need to solve quadratic formula
@@ -162,14 +162,23 @@ def checkSafe(pt, o):
         o.center.y - o.radius - margin < pt.y and pt.y < o.center.y + o.radius + margin and pt.z < o.height)
     
     
-def getSafePts(pts):
+def getSafePts(pts, w2, o1):
     safePts = []
     for pt in pts:
+        #check new line between new waypoint and next waypoint
+        w1 = Waypoint("new", pt.x, pt.y, pt.z)
+        points = GetAvoidPoints(w1, w2, o1)
+        if points != []:
+            continue        
+        #check new waypoint with other obstacle
         if all(checkSafe(pt, o) for o in ObstacleList):
             safePts.append(pt)
+
+#             safePts.add(pt)
     if len(safePts) == 0:
         #reduce the margin but for now just return pts
         return pts
+    
     return safePts
     
 
@@ -186,7 +195,7 @@ def FixSingleSegment():
             aPts = GetAvoidPoints(prevPt, WaypointSeq[i], ob)
             if len(aPts) > 0: # Crossing
                 #check aPts position
-                safePts = getSafePts(aPts)
+                safePts = getSafePts(aPts, WaypointSeq[i], ob)
                 WaypointSeq.insert(i, safePts[0])
                 return(False)
         prevPt = WaypointSeq[i]
@@ -222,9 +231,9 @@ def TestInitProblem():
 #     ObstacleList = [Obstacle('o1', Point(500,500), 50), Obstacle('o2', Point(1000,500), 50)] #test for waypoint near obstacle
 
 
-#     WaypointSeq = [Waypoint('w1', 10, 500, 50), Waypoint('w2', 600, 550, 100), Waypoint('w3', 1200, 500, 200)]
+    WaypointSeq = [Waypoint('w1', 10, 500, 50), Waypoint('w2', 600, 550, 100), Waypoint('w3', 1200, 500, 200)]
 #     # test height
-#     ObstacleList = [Obstacle('o1', Point(500,500,50), 50), Obstacle('o2', Point(1000,500,75), 50)]
+    ObstacleList = [Obstacle('o1', Point(500,500,50), 50), Obstacle('o2', Point(1000,500,75), 50)]
 #     ObstacleList = [Obstacle('o1', Point(400,500,30), 50), Obstacle('o2', Point(1000,500,100), 50)]
 #     ObstacleList = [Obstacle('o1', Point(500,500,25), 50), Obstacle('o2', Point(800,500,300), 50)]
 #     # check new waypoint
