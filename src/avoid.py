@@ -35,7 +35,7 @@ class Obstacle(Circle):
     def PrintMe(self):
         print(self.name + " x=" + str(self.center.x) + " y=" + str(self.center.y) + " r=" + str(self.radius) + "z=" + str(self.height))
         
-
+#only work for 2D
 class Line:
     def __init__(self, m, yint):
         self.slope = m
@@ -233,7 +233,7 @@ def TestInitProblem():
 
     WaypointSeq = [Waypoint('w1', 10, 500, 50), Waypoint('w2', 600, 550, 100), Waypoint('w3', 1200, 500, 200)]
 #     # test height
-    ObstacleList = [Obstacle('o1', Point(500,500,50), 50), Obstacle('o2', Point(1000,500,75), 50)]
+    ObstacleList = [Obstacle('o1', Point(500,500,500), 75), Obstacle('o2', Point(1000,500,750), 100)]
 #     ObstacleList = [Obstacle('o1', Point(400,500,30), 50), Obstacle('o2', Point(1000,500,100), 50)]
 #     ObstacleList = [Obstacle('o1', Point(500,500,25), 50), Obstacle('o2', Point(800,500,300), 50)]
 #     # check new waypoint
@@ -322,3 +322,69 @@ TestInitProblem()
 SolveProblem()
 #DrawSolution(WaypointSeq, ObstacleList)
 
+
+
+##################################################
+# Draw Solutioin in 3D
+##################################################
+import matplotlib.pyplot as plt
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+
+# Plot the obstacle
+##################################################
+for currentObsacle in ObstacleList:
+    # Cylinder
+    x = np.linspace(-currentObsacle.radius, currentObsacle.radius, 100)
+    z = np.linspace(0, currentObsacle.height, 100)
+    Xc, Zc = np.meshgrid(x, z)
+    Yc = np.sqrt(currentObsacle.radius**2 - Xc**2)
+
+    # Draw parameters
+    rstride = 20
+    cstride = 10
+    ax.plot_surface(Xc + currentObsacle.center.x , Yc + currentObsacle.center.y, Zc, alpha=0.2, rstride=rstride, cstride=cstride)
+    ax.plot_surface(Xc + currentObsacle.center.x, -Yc + currentObsacle.center.y, Zc, alpha=0.2, rstride=rstride, cstride=cstride)
+
+
+
+
+#Plot the waypoint and lines in between
+##################################################
+
+#Load the first waypoint
+x = [WaypointSeq[0].x, 0]
+y = [WaypointSeq[0].y, 0]
+z = [WaypointSeq[0].z, 0]
+
+#draw each line segment
+for i in range(len(WaypointSeq)):
+
+    #load the next waypoint
+    x[1] = WaypointSeq[i].x
+    y[1] = WaypointSeq[i].y
+    z[1] = WaypointSeq[i].z
+
+    #draw a line
+    ax.plot(x, y, z, label='Flight Path')
+
+    #move the current waypoint to become the last waypint
+    x[0] = WaypointSeq[i].x
+    y[0] = WaypointSeq[i].y
+    z[0] = WaypointSeq[i].z
+        
+
+ax.set_xlabel("X")
+ax.set_ylabel("Y")
+ax.set_zlabel("Z")
+
+#Set axis limit here
+ax.set_xlim3d(0, 1500)
+ax.set_ylim3d(0, 1500)
+ax.set_zlim3d(0, 750)
+
+plt.show()
