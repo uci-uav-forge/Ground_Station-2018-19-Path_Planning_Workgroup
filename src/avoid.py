@@ -1,5 +1,13 @@
 from math import *
+import json
 
+waypoint_file = open('FlyMission.json','r+')
+plan = json.load(waypoint_file)
+print(plan)
+waypoint_list = plan[0]['mission_waypoints']
+obstacle_file = open('Obstacles.json','r')
+obstacle_list = json.load(obstacle_file)['stationary_obstacles']
+obstacle_file.close()
 class Point:
     def __init__(self, xval=0.0, yval=0.0, zval=0.0):
         self.x = xval
@@ -203,6 +211,7 @@ def FixSingleSegment():
 
 def SolveProblem():
     done = False
+    print('waypt\n',WaypointSeq)
     while not(done):
         DrawSolution(WaypointSeq, ObstacleList)
         done = FixSingleSegment()
@@ -215,35 +224,26 @@ WaypointSeq = []
 ObstacleList = []
 
 # TestInitProblem just creates a set of waypoints and obstacles for testing
+def create_waypoints(waypt_list):
+
+    return [Waypoint('w'+str(waypt['order']),waypt['latitude'],waypt['longitude'],waypt['altitude_msl']) for waypt in sorted(waypt_list,key = lambda x:x['order'])]
+
+def create_obstacles(obs_list):
+    return [Obstacle('o'+str(i),Point(obs['latitude'],obs['longitude'],obs['cylinder_height']),obs['cylinder_radius']) for i,obs in enumerate(obs_list)]
 def TestInitProblem():
     global WaypointSeq
     global ObstacleList
 
-    WaypointSeq = [Waypoint('w1', 10, 500, 50), Waypoint('w2', 1000, 550, 100), Waypoint('w3', 1400, 500, 200)]
-#     ObstacleList = [Obstacle('o1', Point(500,500), 50), Obstacle('o2', Point(1500,500), 50)]
-    # test height
-    ObstacleList = [Obstacle('o1', Point(500,500,75), 50), Obstacle('o2', Point(1200,500,75), 50)] # test height
-#     ObstacleList = [Obstacle('o1', Point(500,500,50), 50), Obstacle('o2', Point(1200,500,75), 50)]
-#     ObstacleList = [Obstacle('o1', Point(500,500,30), 50), Obstacle('o2', Point(1200,500,100), 50)]
-#     ObstacleList = [Obstacle('o1', Point(500,500,25), 50), Obstacle('o2', Point(1200,500,300), 50)]    
-    #test new waypoint
-#     ObstacleList = [Obstacle('o1', Point(500,500, 75), 50), Obstacle('o2', Point(500,390, 200), 50)] #test for check new pt safe
-#     ObstacleList = [Obstacle('o1', Point(500,500), 50), Obstacle('o2', Point(1000,500), 50)] #test for waypoint near obstacle
-
 
     WaypointSeq = [Waypoint('w1', 10, 500, 50), Waypoint('w2', 600, 550, 100), Waypoint('w3', 1200, 500, 200)]
-#     # test height
+
     ObstacleList = [Obstacle('o1', Point(500,500,50), 50), Obstacle('o2', Point(1000,500,75), 50)]
-#     ObstacleList = [Obstacle('o1', Point(400,500,30), 50), Obstacle('o2', Point(1000,500,100), 50)]
-#     ObstacleList = [Obstacle('o1', Point(500,500,25), 50), Obstacle('o2', Point(800,500,300), 50)]
-#     # check new waypoint
-#     ObstacleList = [Obstacle('o1', Point(500,500, 75), 50), Obstacle('o2', Point(500,390, 200), 50)] 
-#     ObstacleList = [Obstacle('o1', Point(400,520, 75), 50), Obstacle('o2', Point(400,400, 20), 50)]
-#     ObstacleList = [Obstacle('o1', Point(400,520, 75), 50), Obstacle('o2', Point(400,400, 200), 50)]
 
+    WaypointSeq = [Waypoint('w1', 10, 500, 50), Waypoint('w2', 1000, 550, 100), Waypoint('w3', 1400, 500, 200)]
 
-    
-
+    ObstacleList = [Obstacle('o1', Point(500,500,75), 50), Obstacle('o2', Point(1200,500,75), 50)] # 
+    WaypointSeq = create_waypoints(waypoint_list)
+    ObstacleList =create_obstacles(obstacle_list)
 
 def PrintWaypointSeq(wseq):
     print("Waypoint Sequence")
@@ -320,5 +320,10 @@ TestInitProblem()
 #main()
 #DrawSolution(WaypointSeq, ObstacleList)
 SolveProblem()
+plan[0]['mission_waypoints'] = [{'altitude_msl':w.z,'latitude':w.x,'longitude':w.y,'order':i+1} for i,w in enumerate(WaypointSeq)]
+waypoint_file.seek(0)
+json.dump(plan,waypoint_file)
+waypoint_file.truncate()
+waypoint_file.close()
 #DrawSolution(WaypointSeq, ObstacleList)
 
