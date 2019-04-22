@@ -1,20 +1,21 @@
 from math import *
 
 class Point:
-    def __init__(self, xval=0.0, yval=0.0):
+    def __init__(self, xval=0.0, yval=0.0, zval=0.0):
         self.x = xval
         self.y = yval
+        self.z = zval
     def PrintMe(self):
-        print("x=" + str(self.x) + " y=" + str(self.y))
+        print("x=" + str(self.x) + " y=" + str(self.y) + "z=" + str(self.z))
 
 class Waypoint(Point):
-    def __init__(self, aname, xval=0.0, yval=0.0):
+    def __init__(self, aname, xval=0.0, yval=0.0, zval=0.0):
         self.name = aname
         self.x = xval
         self.y = yval
+        self.z = zval
     def PrintMe(self):
-        print(self.name + " x=" + str(self.x) + " y=" + str(self.y))
-
+        print(self.name + "x=" + str(self.x) + " y=" + str(self.y) + "z=" + str(self.z))
 
 class Circle:
     def __init__(self, pt:Point, rad): #pt:Point
@@ -30,8 +31,9 @@ class Obstacle(Circle):
         self.name = aname
         self.center = pt
         self.radius = rad
+        self.height = pt.z
     def PrintMe(self):
-        print(self.name + " x=" + str(self.center.x) + " y=" + str(self.center.y) + " r=" + str(self.radius))
+        print(self.name + " x=" + str(self.center.x) + " y=" + str(self.center.y) + " r=" + str(self.radius) + "z=" + str(self.height))
         
 
 class Line:
@@ -57,16 +59,16 @@ def GetLineSlope(pt, m):
 def SolveQuadratic(a, b, c):
     d = b**2-4*a*c # discriminant
     if d < 0:
-       return ([])
+        return ([])
     elif d == 0:
-       s1 = (-b)/(2*a)
-       return ([s1])
+        s1 = (-b)/(2*a)
+        return ([s1])
     else:
-       s1 = (-b+sqrt(d))/(2*a)
-       s2 = (-b-sqrt(d))/(2*a)
-       return([s1, s2])
+        s1 = (-b+sqrt(d))/(2*a)
+        s2 = (-b-sqrt(d))/(2*a)
+        return([s1, s2])
 
-def GetIntersectLineCirc(aline, circ):
+def GetIntersectLineCirc(aline, circ, height):
     # Need to solve quadratic formula
     # First, define some shorthand
     m = aline.slope
@@ -91,14 +93,14 @@ def GetIntersectLineCirc(aline, circ):
     if len(solns) == 0:
         return([])
     elif len(solns) == 1:
-        return([Point(solns[0], m * solns[0] + bi)])
+        return([Point(solns[0], m * solns[0] + bi, height)])
     elif len(solns) == 2:
-        return([Point(solns[0], m * solns[0] + bi), Point(solns[1], m * solns[1] + bi)])
+        return([Point(solns[0], m * solns[0] + bi, height), Point(solns[1], m * solns[1] + bi, height)])
     else:
         return (-1) # This should never happen
 
 def Midpoint(pt1, pt2):
-    return(Point((pt1.x + pt2.x) / 2, (pt1.y + pt2.y) / 2))
+    return(Point((pt1.x + pt2.x) / 2, (pt1.y + pt2.y) / 2, (pt1.z + pt2.z) / 2))
 
 def GetAvoidPoints(w1, w2, o1):
     # Step 1: Find intersecting points between waypoint line and buffer circle
@@ -112,8 +114,10 @@ def GetAvoidPoints(w1, w2, o1):
 
 #    print("Buffer circle") # debug
 #    bcirc.PrintMe() # debug
+	
+    aver_z = (w1.z + w2.z) / 2  #average height of w1 and w2
     
-    iPts = GetIntersectLineCirc(wline, bcirc)
+    iPts = GetIntersectLineCirc(wline, bcirc, aver_z)
     # Important! Check that intersecting points not between the two waypoints.
     minx = min(w1.x, w2.x)
     maxx = max(w1.x, w2.x)
@@ -148,24 +152,33 @@ def GetAvoidPoints(w1, w2, o1):
         SafetyMargin = o1.radius * 0.2
         bcirc2 = Circle(o1.center, o1.radius + 2 * SafetyMargin)
         # Step 6: Find the intersection points and return them
-        return (GetIntersectLineCirc(pline, bcirc2))
+        return (GetIntersectLineCirc(pline, bcirc2, aver_z))
     
 
 def checkSafe(pt, o):
     # check if the points in the range of the obstacle
     margin = o.radius * 0.2
     return not (o.center.x - o.radius - margin < pt.x and pt.x < o.center.x + o.radius + margin and \
-        o.center.y - o.radius - margin < pt.y and pt.y < o.center.y + o.radius + margin)
+        o.center.y - o.radius - margin < pt.y and pt.y < o.center.y + o.radius + margin and pt.z < o.height)
     
     
-def getSafePts(pts):
+def getSafePts(pts, w2, o1):
     safePts = []
     for pt in pts:
+        #check new line between new waypoint and next waypoint
+        w1 = Waypoint("new", pt.x, pt.y, pt.z)
+        points = GetAvoidPoints(w1, w2, o1)
+        if points != []:
+            continue        
+        #check new waypoint with other obstacle
         if all(checkSafe(pt, o) for o in ObstacleList):
             safePts.append(pt)
+
+#             safePts.add(pt)
     if len(safePts) == 0:
         #reduce the margin but for now just return pts
         return pts
+    
     return safePts
     
 
@@ -174,10 +187,15 @@ def FixSingleSegment():
     prevPt = WaypointSeq[0]
     for i in range(1, len(WaypointSeq)):
         for ob in ObstacleList:
+			# height checking
+            min_h = min(prevPt.z, WaypointSeq[i].z)
+            if min_h > ob.center.z + 20:
+                continue
+            averg_h = (prevPt.z + WaypointSeq[i].z) / 2
             aPts = GetAvoidPoints(prevPt, WaypointSeq[i], ob)
             if len(aPts) > 0: # Crossing
                 #check aPts position
-                safePts = getSafePts(aPts)
+                safePts = getSafePts(aPts, WaypointSeq[i], ob)
                 WaypointSeq.insert(i, safePts[0])
                 return(False)
         prevPt = WaypointSeq[i]
@@ -201,10 +219,31 @@ def TestInitProblem():
     global WaypointSeq
     global ObstacleList
 
-    WaypointSeq = [Waypoint('w1', 10, 500), Waypoint('w2', 1000, 550), Waypoint('w3', 1900, 500)]
+    WaypointSeq = [Waypoint('w1', 10, 500, 50), Waypoint('w2', 1000, 550, 100), Waypoint('w3', 1400, 500, 200)]
 #     ObstacleList = [Obstacle('o1', Point(500,500), 50), Obstacle('o2', Point(1500,500), 50)]
-    ObstacleList = [Obstacle('o1', Point(500,500), 50), Obstacle('o2', Point(500,390), 50)] #test for check new pt safe
+    # test height
+    ObstacleList = [Obstacle('o1', Point(500,500,75), 50), Obstacle('o2', Point(1200,500,75), 50)] # test height
+#     ObstacleList = [Obstacle('o1', Point(500,500,50), 50), Obstacle('o2', Point(1200,500,75), 50)]
+#     ObstacleList = [Obstacle('o1', Point(500,500,30), 50), Obstacle('o2', Point(1200,500,100), 50)]
+#     ObstacleList = [Obstacle('o1', Point(500,500,25), 50), Obstacle('o2', Point(1200,500,300), 50)]    
+    #test new waypoint
+#     ObstacleList = [Obstacle('o1', Point(500,500, 75), 50), Obstacle('o2', Point(500,390, 200), 50)] #test for check new pt safe
 #     ObstacleList = [Obstacle('o1', Point(500,500), 50), Obstacle('o2', Point(1000,500), 50)] #test for waypoint near obstacle
+
+
+    WaypointSeq = [Waypoint('w1', 10, 500, 50), Waypoint('w2', 600, 550, 100), Waypoint('w3', 1200, 500, 200)]
+#     # test height
+    ObstacleList = [Obstacle('o1', Point(500,500,50), 50), Obstacle('o2', Point(1000,500,75), 50)]
+#     ObstacleList = [Obstacle('o1', Point(400,500,30), 50), Obstacle('o2', Point(1000,500,100), 50)]
+#     ObstacleList = [Obstacle('o1', Point(500,500,25), 50), Obstacle('o2', Point(800,500,300), 50)]
+#     # check new waypoint
+#     ObstacleList = [Obstacle('o1', Point(500,500, 75), 50), Obstacle('o2', Point(500,390, 200), 50)] 
+#     ObstacleList = [Obstacle('o1', Point(400,520, 75), 50), Obstacle('o2', Point(400,400, 20), 50)]
+#     ObstacleList = [Obstacle('o1', Point(400,520, 75), 50), Obstacle('o2', Point(400,400, 200), 50)]
+
+
+    
+
 
 def PrintWaypointSeq(wseq):
     print("Waypoint Sequence")
@@ -239,13 +278,21 @@ def StartGui():
 
 def DrawWaypoint(myCanvas, pt):
     PR = 3
+    x = pt.x
+    y = pt.y
+    z = pt.z
     item = myCanvas.create_oval(pt.x-PR, pt.y-PR, pt.x+PR, pt.y+PR, fill="blue", outline="black")
+    ###test zone
+    myCanvas.create_text(x+2*PR,y+2*PR,text="height: {}".format(z),fill="green")
 
+    
 def DrawObstacle(myCanvas, o1):
     x = o1.center.x
     y = o1.center.y
     r = o1.radius
+    h = o1.center.z
     myCanvas.create_oval(x-r, y-r, x+r, y+r, fill="red", outline="black")
+    myCanvas.create_text(x-r-5,y-r-5,text="height: {}".format(h))
 
 def DrawLineSeg(myCanvas, pt1, pt2):
     myCanvas.create_line(pt1.x, pt1.y, pt2.x, pt2.y, fill="blue")
@@ -267,11 +314,11 @@ def DrawSolution(wseq, olist):
 
 ### Some test code
 TestInitProblem()
-# x = GetAvoidPoints(WaypointSeq[0], WaypointSeq[1], ObstacleList[0])
-# PrintWaypointSeq(WaypointSeq)
-# PrintObstacleList(ObstacleList)
-# main()
-# DrawSolution(WaypointSeq, ObstacleList)
+#x = GetAvoidPoints(WaypointSeq[0], WaypointSeq[1], ObstacleList[0])
+#PrintWaypointSeq(WaypointSeq)
+#PrintObstacleList(ObstacleList)
+#main()
+#DrawSolution(WaypointSeq, ObstacleList)
 SolveProblem()
-# DrawSolution(WaypointSeq, ObstacleList)
+#DrawSolution(WaypointSeq, ObstacleList)
 
