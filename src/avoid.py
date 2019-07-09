@@ -23,7 +23,9 @@ class Circle:
         self.radius = rad
     def PrintMe(self):
         print("x=" + str(self.center.x) + " y=" + str(self.center.y) + " r=" + str(self.radius))
-     
+        
+
+
 class Obstacle(Circle):
     def __init__(self, aname, pt:Point, rad): #pt:Point
         self.name = aname
@@ -32,7 +34,6 @@ class Obstacle(Circle):
         self.height = pt.z
     def PrintMe(self):
         print(self.name + " x=" + str(self.center.x) + " y=" + str(self.center.y) + " r=" + str(self.radius) + "z=" + str(self.height))
-  
         
 #only work for 2D
 class Line:
@@ -41,6 +42,9 @@ class Line:
         self.yInt = yint
     def PrintMe(self):
         print("m=" + str(self.slope) + " b=" + str(self.yInt))
+
+
+
 
 def GetLinePts(pt1, pt2):
     m = (pt2.y - pt1.y) / (pt2.x - pt1.x)
@@ -178,7 +182,24 @@ def getSafePts(pts, w2, o1):
     return safePts
     
 
-
+def FixSingleSegment():
+    global WaypointSeq
+    prevPt = WaypointSeq[0]
+    for i in range(1, len(WaypointSeq)):
+        for ob in ObstacleList:
+			# height checking
+            min_h = min(prevPt.z, WaypointSeq[i].z)
+            if min_h > ob.center.z + 20:
+                continue
+            averg_h = (prevPt.z + WaypointSeq[i].z) / 2
+            aPts = GetAvoidPoints(prevPt, WaypointSeq[i], ob)
+            if len(aPts) > 0: # Crossing
+                #check aPts position
+                safePts = getSafePts(aPts, WaypointSeq[i], ob)
+                WaypointSeq.insert(i, safePts[0])
+                return(False)
+        prevPt = WaypointSeq[i]
+    return(True)
 
 def SolveProblem():
     done = False
@@ -303,72 +324,6 @@ SolveProblem()
 
 
 
-
-safetyMarginTop = 25 #units in feet
-global wayPointSeq
-
-
-##################################################
-# Sub Fucntions
-##################################################
-
-
-
-
-
-
-
-
-def fixSingleSegment():
-
-    previousWayPoint = wayPointSeq[0]
-
-    for i in range(1, len(wayPointSeq)):
-        for ob in obstacleList:
-			# height checking
-            minHeight = min(previousWayPoint.z, wayPointSeq[i].z)
-
-            
-            if minHeight > ob.center.z + safetyMarginTop:
-                printf("[Info] [AI Pilot] We can fly over an obstacle while using the shirtest distance to get to the next waypoint!")
-            else:
-                printf("[Info] [AI Pilot] We can fly over an obstacle!")
-
-                continue
-
-            averg_h = (prevPt.z + WaypointSeq[i].z) / 2
-
-            aPts = GetAvoidPoints(prevPt, WaypointSeq[i], ob)
-
-            if len(aPts) > 0: # Crossing
-                #check aPts position
-                safePts = getSafePts(aPts, WaypointSeq[i], ob)
-                WaypointSeq.insert(i, safePts[0])
-                return(False)
-        prevPt = WaypointSeq[i]
-    return(True)
-
-
-def avoidObstacles():
-    print("avoidObstacles")
-    done = False
-    while not(done):
-        # DrawSolution(WaypointSeq, ObstacleList) #only to draw 2D
-        done = fixSingleSegment()   #the avoid and check
-
-
-
-
-##################################################
-# Main()
-##################################################
-
-
-
-avoidObstacles()
-
-
-
 ##################################################
 # Draw Solutioin in 3D
 ##################################################
@@ -396,6 +351,8 @@ for currentObsacle in ObstacleList:
     ax.plot_surface(Xc + currentObsacle.center.x, -Yc + currentObsacle.center.y, Zc, alpha=0.2, rstride=rstride, cstride=cstride)
 
 
+
+
 #Plot the waypoint and lines in between
 ##################################################
 
@@ -420,8 +377,7 @@ for i in range(len(WaypointSeq)):
     y[0] = WaypointSeq[i].y
     z[0] = WaypointSeq[i].z
         
-#Canvas Setting
-##################################################
+
 ax.set_xlabel("X")
 ax.set_ylabel("Y")
 ax.set_zlabel("Z")
