@@ -19,8 +19,14 @@
     <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="drawer.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="main.py" />
     <Compile Include="solver.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="storage.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
